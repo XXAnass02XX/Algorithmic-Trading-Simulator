@@ -1,0 +1,41 @@
+﻿# =========================
+# .NET / C# Build Artifacts
+# =========================
+bin/
+obj/
+TestResults/
+*.Publish.xml
+
+# =========================
+# JetBrains Rider / ReSharper
+# =========================
+.idea/
+*.sln.iml
+_ReSharper*/
+*.DotSettings.user
+
+# =========================
+# Visual Studio (Good for team compatibility)
+# =========================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# =========================
+# OS Generated Files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+#=========================
+# Mine
+
+*.editorconfig
+*.cache
+*.targets
+*.info
+*.json
