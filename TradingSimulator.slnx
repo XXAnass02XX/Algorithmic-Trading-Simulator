@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TrasingSimulator/TrasingSimulator.csproj" />
+  <Project Path="UnitTests/UnitTests.csproj" />
+</Solution>

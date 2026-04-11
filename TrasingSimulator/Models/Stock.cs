@@ -29,7 +29,7 @@ public class Stock
     {
         return CurrentPrice - PreviousClose;
     }
-    public string ToString()
+    public override string ToString()
     {
         decimal change  = PriceChange();
         decimal changePct = PriceChangePercent();

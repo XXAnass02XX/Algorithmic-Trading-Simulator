@@ -33,7 +33,7 @@ Thumbs.db
 ehthumbs.db
 #=========================
 # Mine
-
+#=========================
 *.editorconfig
 *.cache
 *.targets
