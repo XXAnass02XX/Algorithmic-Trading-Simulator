@@ -39,3 +39,9 @@ ehthumbs.db
 *.targets
 *.info
 *.json
+apikey.txt
+*.dll
+*.pdb
+*.user
+UnitTests/obj/
+UnitTests/bin/
