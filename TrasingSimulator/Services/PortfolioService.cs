@@ -4,82 +4,53 @@ namespace TrasingSimulator.Services
 {
     public class PortfolioService
     {
-        // ─── Fields ──────────────────────────────────────────────────────────
-
+        #region Properties
         private decimal _cashBalance;
         private readonly decimal _startingBalance;
-
-        // Key = stock symbol (e.g. "AAPL"), Value = the position you hold
         private readonly Dictionary<string, Position> _positions
             = new Dictionary<string, Position>();
-
-        // Every buy and sell ever made — never deleted, append-only
         private readonly List<Trade> _tradeHistory
             = new List<Trade>();
-
-        // The file path where the portfolio is saved between sessions
         private const string SAVE_FILE = "portfolio.json";
+        public decimal CashBalance   => _cashBalance;
+        public int     PositionCount => _positions.Count;
+        public int     TradeCount    => _tradeHistory.Count;
+        public IReadOnlyDictionary<string, Position> Positions => _positions;
+        public IReadOnlyList<Trade> TradeHistory => _tradeHistory;
+        #endregion
 
-        // ─── Constructor ─────────────────────────────────────────────────────
-
+        #region Constructors
         public PortfolioService(decimal startingBalance = 10_000m)
         {
             _startingBalance = startingBalance;
             _cashBalance     = startingBalance;
         }
-
-        // ─── Read-only Public Properties ─────────────────────────────────────
-
-        // Outside code can READ these but never directly SET them
-        public decimal CashBalance   => _cashBalance;
-        public int     PositionCount => _positions.Count;
-        public int     TradeCount    => _tradeHistory.Count;
-
-        // Returns a copy of positions — callers cannot mutate the dictionary
-        public IReadOnlyDictionary<string, Position> Positions => _positions;
-
-        // Returns a copy of trades — callers cannot add/remove trades
-        public IReadOnlyList<Trade> TradeHistory => _tradeHistory;
-
-        // ─── Core Trading Methods ─────────────────────────────────────────────
-
+        #endregion
         public bool Buy(string symbol, int shares, decimal currentPrice)
         {
-            // ── Validation ──
             if (shares <= 0)
             {
                 PrintError("Number of shares must be greater than zero.");
                 return false;
             }
-
             decimal totalCost = shares * currentPrice;
-
             if (totalCost > _cashBalance)
             {
                 PrintError($"Insufficient funds. " +
                            $"Need ${totalCost:F2} but only have ${_cashBalance:F2}.");
                 return false;
             }
-
-            // ── Execute the buy ──
             _cashBalance -= totalCost;
-
             if (_positions.ContainsKey(symbol))
             {
-                // Already own this stock — add to existing position
-                // Position.AddShares() recalculates the weighted average
                 _positions[symbol].AddShares(shares, currentPrice);
             }
             else
             {
-                // First purchase of this stock — open a brand new position
                 _positions[symbol] = new Position(symbol, shares, currentPrice);
             }
-
-            // Record the trade permanently
             var trade = new Trade(symbol, TradeType.Buy, shares, currentPrice);
             _tradeHistory.Add(trade);
-
             PrintSuccess($"Bought {shares} share(s) of {symbol} " +
                          $"at ${currentPrice:F2} — Total: ${totalCost:F2}");
             return true;
@@ -87,21 +58,17 @@ namespace TrasingSimulator.Services
 
         public bool Sell(string symbol, int shares, decimal currentPrice)
         {
-            // ── Validation ──
             if (shares <= 0)
             {
                 PrintError("Number of shares must be greater than zero.");
                 return false;
             }
-
             if (!_positions.ContainsKey(symbol))
             {
                 PrintError($"You don't own any shares of {symbol}.");
                 return false;
             }
-
             Position pos = _positions[symbol];
-
             if (shares > pos.Shares)
             {
                 PrintError($"Cannot sell {shares} shares — " +
@@ -113,8 +80,6 @@ namespace TrasingSimulator.Services
             decimal costBasis    = shares * pos.AverageBuyPrice;
             decimal saleProceeds = shares * currentPrice;
             decimal realizedPnL  = saleProceeds - costBasis;
-
-            // ── Execute the sell ──
             _cashBalance += saleProceeds;
 
             try
@@ -123,18 +88,12 @@ namespace TrasingSimulator.Services
             }
             catch (InvalidOperationException ex)
             {
-                // RemoveShares() is defensive — this shouldn't happen given the
-                // check above, but we handle it gracefully just in case
                 PrintError($"Unexpected error: {ex.Message}");
                 _cashBalance -= saleProceeds; // roll back the cash change
                 return false;
             }
-
-            // If the position is now empty, remove it from the dictionary
             if (pos.Shares == 0)
                 _positions.Remove(symbol);
-
-            // Record the trade
             var trade = new Trade(symbol, TradeType.Sell, shares, currentPrice);
             _tradeHistory.Add(trade);
 
@@ -149,8 +108,6 @@ namespace TrasingSimulator.Services
         }
 
         // ─── Portfolio Metrics ────────────────────────────────────────────────
-
-        // Total value of all shares at current market prices
         public decimal GetPortfolioMarketValue(
             Dictionary<string, decimal> currentPrices)
         {
@@ -163,11 +120,8 @@ namespace TrasingSimulator.Services
                 if (currentPrices.TryGetValue(symbol, out decimal price))
                     total += kvp.Value.MarketValue(price);
             }
-
             return total;
         }
-
-        // Cash + value of all holdings
         public decimal GetTotalAccountValue(
             Dictionary<string, decimal> currentPrices)
         {

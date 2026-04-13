@@ -9,7 +9,7 @@ using TrasingSimulator.Services;
 ConsoleDisplay.PrintWelcome();
 
 // Replace with your real Alpha Vantage key from alphavantage.co
-const string API_KEY = "YOUR_API_KEY_HERE";
+string API_KEY = File.ReadAllText("C:\\Users\\anass\\me\\work\\CS\\Algorithmic Trading Simulator\\TrasingSimulator\\apikey.txt").Trim();
 
 var marketData = new MarketDataService(API_KEY);
 var portfolio  = new PortfolioService(startingBalance: 10_000m);
@@ -203,6 +203,12 @@ while (running)
             ConsoleDisplay.ExportToCsv(portfolio.TradeHistory, csvPath);
             break;
 
+        // ── S. Strategy Simulation ────────────────────────────────────────
+        case "s":
+        case "S":
+            await RunSimulationAsync(marketData);
+            break;
+
         // ── 0. Save & Exit ────────────────────────────────────────────────
         case "0":
             portfolio.SaveToFile();
@@ -231,4 +237,85 @@ async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
     }
 
     return prices;
+}
+
+// ─── Strategy Simulation ─────────────────────────────────────────────────────
+
+async Task RunSimulationAsync(MarketDataService marketData)
+{
+    Console.WriteLine();
+    Console.WriteLine("═══════════════════════════════════════════════════════════");
+    Console.WriteLine("              STRATEGY SIMULATION MODE                  ");
+    Console.WriteLine("═══════════════════════════════════════════════════════════");
+
+    string[] symbols = { "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA" };
+    int[] daysOfData = { 100, 200 };
+    var allResults = new List<(string symbol, int days, BacktestResult result)>();
+
+    foreach (int days in daysOfData)
+    {
+        Console.WriteLine($"\n  Fetching {days} days of data...");
+        
+        foreach (string symbol in symbols)
+        {
+            Console.Write($"    {symbol}... ");
+            List<decimal> prices = await marketData.GetHistoricalPricesAsync(symbol, days);
+            
+            if (prices.Count < 51)
+            {
+                Console.WriteLine($"SKIPPED (only {prices.Count} days available)");
+                await Task.Delay(12000);
+                continue;
+            }
+
+            var result = strategy.Backtest(symbol, prices, startingCapital: 10_000m);
+            allResults.Add((symbol, days, result));
+            
+            Console.WriteLine($"Return: {result.ReturnPercent:+0.00}% | Sharpe: {result.SharpeRatio:F2} | Win Rate: {result.WinRate:F0}%");
+            
+            await Task.Delay(12000);
+        }
+    }
+
+    SimulationDisplay.PrintSimulationSummary(allResults);
+}
+
+// ─── Simulation Summary Display ──────────────────────────────────────────────
+
+static class SimulationDisplay
+{
+    public static void PrintSimulationSummary(List<(string symbol, int days, BacktestResult result)> results)
+    {
+        Console.WriteLine();
+        Console.WriteLine("═══════════════════════════════════════════════════════════");
+        Console.WriteLine("              SIMULATION RESULTS SUMMARY                  ");
+        Console.WriteLine("═══════════════════════════════════════════════════════════");
+
+        foreach (var group in results.GroupBy(r => r.days).OrderBy(g => g.Key))
+        {
+            Console.WriteLine($"\n  ── {group.Key} Days of Data ──");
+            Console.WriteLine($"  {"Symbol",-8} {"Return",10} {"Sharpe",8} {"WinRate",8} {"Trades",7}");
+            Console.WriteLine($"  {"------",-8} {"------",10} {"------",8} {"------",8} {"------",7}");
+
+            var best = group.OrderByDescending(r => r.result.SharpeRatio).FirstOrDefault();
+            
+            foreach (var (symbol, days, result) in group.OrderByDescending(r => r.result.SharpeRatio))
+            {
+                bool isBest = result.SharpeRatio == best.result.SharpeRatio && result.SharpeRatio > 0;
+                string highlight = isBest ? " ★" : "";
+                
+                Console.ForegroundColor = result.ReturnPercent >= 0 
+                    ? ConsoleColor.Green 
+                    : ConsoleColor.Red;
+                Console.WriteLine($"  {symbol,-8} {result.ReturnPercent,+9:F2}% {result.SharpeRatio,7:F2} {result.WinRate,7:F0}% {result.TotalTrades,6}{highlight}");
+            }
+            Console.ResetColor();
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("═══════════════════════════════════════════════════════════");
+        Console.WriteLine("  ★ = Best Sharpe Ratio in group                          ");
+        Console.WriteLine("  Sharpe > 1.0 = Good | > 2.0 = Excellent | < 0 = Losing");
+        Console.WriteLine("═══════════════════════════════════════════════════════════");
+    }
 }

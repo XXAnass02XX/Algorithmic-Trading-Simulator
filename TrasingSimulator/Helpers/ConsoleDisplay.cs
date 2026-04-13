@@ -25,19 +25,23 @@ namespace TrasingSimulator.Helpers
         public static void PrintMenu()
         {
             Console.WriteLine();
-            Console.WriteLine("  ─────────────── MENU ───────────────");
-            Console.WriteLine("  1.  View portfolio summary");
-            Console.WriteLine("  2.  View open positions");
-            Console.WriteLine("  3.  Buy shares");
-            Console.WriteLine("  4.  Sell shares");
-            Console.WriteLine("  5.  View trade history");
-            Console.WriteLine("  6.  Get stock quote");
-            Console.WriteLine("  7.  Run strategy signal");
-            Console.WriteLine("  8.  Backtest strategy");
-            Console.WriteLine("  9.  Export trades to CSV");
-            Console.WriteLine("  0.  Save & exit");
-            Console.WriteLine("  ─────────────────────────────────────");
-            Console.Write("\n  Choice: ");
+            Console.WriteLine("  ╔════════════════════════════════════════╗");
+            Console.WriteLine("  ║              MAIN MENU                 ║");
+            Console.WriteLine("  ╠════════════════════════════════════════╣");
+            Console.WriteLine("  ║  1.  View portfolio summary           ║");
+            Console.WriteLine("  ║  2.  View open positions              ║");
+            Console.WriteLine("  ║  3.  Buy shares                        ║");
+            Console.WriteLine("  ║  4.  Sell shares                       ║");
+            Console.WriteLine("  ║  5.  View trade history                ║");
+            Console.WriteLine("  ║  6.  Get stock quote                   ║");
+            Console.WriteLine("  ║  7.  Run strategy signal               ║");
+            Console.WriteLine("  ║  8.  Backtest strategy                 ║");
+            Console.WriteLine("  ║  9.  Export trades to CSV              ║");
+            Console.WriteLine("  ║  S.  Run strategy simulation           ║");
+            Console.WriteLine("  ║  0.  Save & exit                       ║");
+            Console.WriteLine("  ╚════════════════════════════════════════╝");
+            Console.WriteLine();
+            Console.Write("  Enter your choice: ");
         }
 
         // ─── Stock Quote ──────────────────────────────────────────────────────
